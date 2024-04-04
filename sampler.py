@@ -67,11 +67,13 @@ class BaseSampler:
         num_gpus = torch.cuda.device_count()
 
         if num_gpus > 1:
-            if mp.get_start_method(allow_none=True) is None:
-                mp.set_start_method('spawn')
-            rank = int(os.environ['LOCAL_RANK'])
-            torch.cuda.set_device(rank % num_gpus)
-            dist.init_process_group(backend='nccl', init_method='env://')
+            # if mp.get_start_method(allow_none=True) is None:
+                # mp.set_start_method('spawn')
+            # rank = int(os.environ['LOCAL_RANK'])
+            # torch.cuda.set_device(rank % num_gpus)
+            # dist.init_process_group(backend='nccl', init_method='env://')
+            rank = 0
+            torch.cuda.set_device(rank)
 
         self.num_gpus = num_gpus
         self.rank = int(os.environ['LOCAL_RANK']) if num_gpus > 1 else 0
