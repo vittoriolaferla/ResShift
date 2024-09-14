@@ -1040,7 +1040,7 @@ class SmallestMaxSize:
 
 # ----------------------augmentation----------------------------
 class SpatialAug:
-    def __init__(self, pass_aug, only_hflip=False, only_vflip=False, only_hvflip=False):
+    def __init__(self, pass_aug=False, only_hflip=False, only_vflip=False, only_hvflip=False):
         self.only_hflip = only_hflip
         self.only_vflip = only_vflip
         self.only_hvflip = only_hvflip

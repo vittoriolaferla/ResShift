@@ -189,3 +189,4 @@ dependencies:
     - xformers==0.0.23.post1+cu118
     - yapf==0.40.2
     - zipp==3.17.0
+    - loralib==0.1.2

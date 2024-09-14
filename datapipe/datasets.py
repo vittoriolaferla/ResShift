@@ -141,6 +141,8 @@ def create_dataset(dataset_config):
         dataset = DegradedDataFromSource(**dataset_config['params'])
     elif dataset_config['type'] == 'bicubic':
         dataset = BicubicFromSource(**dataset_config['params'])
+    elif dataset_config['type'] == 'paired':
+        dataset = PairedData(**dataset_config['params'])
     else:
         raise NotImplementedError(dataset_config['type'])
 
@@ -196,6 +198,58 @@ class BaseData(Dataset):
             im_extra = util_image.imread(im_path_extra, chn='rgb', dtype='float32')
             im_extra = self.extra_transform(im_extra)
             out['gt'] = im_extra
+
+        if self.need_path:
+            out['path'] = im_path_base
+
+        return out
+
+    def reset_dataset(self):
+        self.file_paths = random.sample(self.file_paths_all, self.length)
+
+class PairedData(Dataset):
+    def __init__(
+            self,
+            dir_path,
+            dir_path_extra,
+            transform_type='default',
+            transform_kwargs={'mean':0.5, 'std':0.5},
+            pch_size=256,
+            im_exts='png',
+            length=None,
+            recursive=False,
+            need_path=False,
+            ):
+        super().__init__()
+
+        file_paths_all = []
+        if dir_path is not None:
+            file_paths_all.extend(util_common.scan_files_from_folder(dir_path, im_exts, recursive))
+
+        self.file_paths = file_paths_all if length is None else random.sample(file_paths_all, length)
+        self.file_paths_all = file_paths_all
+
+        self.length = length
+        self.need_path = need_path
+        self.transform = get_transforms(transform_type, transform_kwargs)
+
+        self.dir_path_extra = dir_path_extra
+
+    def __len__(self):
+        return len(self.file_paths)
+
+    def __getitem__(self, index):
+        im_path_base = self.file_paths[index]
+        im_base = util_image.imread(im_path_base, chn='rgb', dtype='uint8')
+        im_path_extra = Path(self.dir_path_extra) / Path(im_path_base).name
+        im_extra = util_image.imread(im_path_extra, chn='rgb', dtype='uint8')
+
+        im_all = np.concatenate([im_base, im_extra], -1)
+
+        im_all = self.transform(im_all)
+        im_lq, im_gt = torch.chunk(im_all, 2, dim=0)
+
+        out = {'lq':im_lq, 'gt':im_gt}
 
         if self.need_path:
             out['path'] = im_path_base

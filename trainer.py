@@ -469,7 +469,13 @@ class TrainerDifIR(TrainerBase):
             self.autoencoder = None
 
         # LPIPS metric
-        lpips_loss = lpips.LPIPS(net='vgg').to(f"cuda:{self.rank}")
+        if hasattr(self.configs, 'lpips'):
+            lpips_net = self.configs.lpips.net
+        else:
+            lpips_net = 'vgg'
+        if self.rank == 0:
+            self.logger.info(f"Loading LIIPS Metric: {lpips_net}...")
+        lpips_loss = lpips.LPIPS(net=lpips_net).to(f"cuda:{self.rank}")
         for params in lpips_loss.parameters():
             params.requires_grad_(False)
         lpips_loss.eval()
