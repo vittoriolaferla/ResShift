@@ -91,21 +91,64 @@ class BaseSampler:
         ckpt_path =self.configs.model.ckpt_path
         assert ckpt_path is not None
         self.write_log(f'Loading Diffusion model from {ckpt_path}...')
-        self.load_model(model, ckpt_path)
+        ckpt = torch.load(ckpt_path, map_location=f"cuda:{self.rank}")
+        if 'state_dict' in ckpt:
+            util_net.reload_model(model, ckpt['state_dict'])
+        else:
+            util_net.reload_model(model, ckpt)
         self.freeze_model(model)
         self.model = model.eval()
 
         # autoencoder model
+        if self.configs.autoencoder.params.get("lora_tune_decoder", False):
+            lora_vae_state = ckpt['lora_vae']
+        elif self.configs.autoencoder.get("tune_decoder", False):
+            vae_state = ckpt['vae']
         if self.configs.autoencoder is not None:
-            ckpt_path = self.configs.autoencoder.ckpt_path
-            assert ckpt_path is not None
-            self.write_log(f'Loading AutoEncoder model from {ckpt_path}...')
-            autoencoder = util_common.instantiate_from_config(self.configs.autoencoder).cuda()
-            self.load_model(autoencoder, ckpt_path)
+            params = self.configs.autoencoder.get('params', dict)
+            autoencoder = util_common.get_obj_from_str(self.configs.autoencoder.target)(**params)
+            autoencoder.cuda()
+            if self.configs.autoencoder.params.get("lora_tune_decoder", False):
+                ckpt_path = self.configs.autoencoder.ckpt_path
+                self.write_log(f'Loading AutoEncoder model from {ckpt_path}...')
+                self.load_model_lora(autoencoder, ckpt_path, tag='autoencoder')
+                autoencoder.load_state_dict(lora_vae_state, strict=False)
+            elif self.configs.autoencoder.get("tune_decoder", False):
+                ckpt_path = self.configs.autoencoder.ckpt_path
+                self.write_log(f'Loading AutoEncoder model from {ckpt_path}...')
+                self.load_model(autoencoder, ckpt_path)
+                ckpt_path =self.configs.model.ckpt_path
+                self.write_log(f'Loading Finetuned decoder from {ckpt_path}...')
+                autoencoder.load_state_dict(vae_state, strict=False)
+            else:
+                ckpt_path = self.configs.autoencoder.ckpt_path
+                self.write_log(f'Loading AutoEncoder model from {ckpt_path}...')
+                self.load_model(autoencoder, ckpt_path)
             autoencoder.eval()
             self.autoencoder = autoencoder
         else:
             self.autoencoder = None
+
+    def load_model_lora(self, model, ckpt_path=None, tag='model'):
+        if self.rank == 0:
+            self.write_log(f'Loading {tag} from {ckpt_path}...')
+        ckpt = torch.load(ckpt_path, map_location=f"cuda:{self.rank}")
+        num_success = 0
+        for key, value in model.named_parameters():
+            if key in ckpt:
+                value.data.copy_(ckpt[key])
+                num_success += 1
+            else:
+                key_parts = key.split('.')
+                if 'conv' in key_parts:
+                    key_parts.remove('conv')
+                new_key = '.'.join(key_parts)
+                if new_key in ckpt:
+                    value.data.copy_(ckpt[new_key])
+                    num_success += 1
+        assert num_success == len(ckpt)
+        if self.rank == 0:
+            self.write_log('Loaded Done')
 
     def load_model(self, model, ckpt_path=None):
         state = torch.load(ckpt_path, map_location=f"cuda:{self.rank}")

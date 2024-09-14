@@ -20,6 +20,7 @@ _STEP = {
     'inpaint_imagenet': 4,
     'inpaint_face': 4,
     'faceir': 4,
+    'deblur': 4,
     }
 _LINK = {
     'vqgan': 'https://github.com/zsyOAOA/ResShift/releases/download/v2.0/autoencoder_vq_f4.pth',
@@ -32,7 +33,8 @@ _LINK = {
     'inpaint_imagenet': 'https://github.com/zsyOAOA/ResShift/releases/download/v2.0/resshift_inpainting_imagenet_s4.pth',
     'inpaint_face': 'https://github.com/zsyOAOA/ResShift/releases/download/v2.0/resshift_inpainting_face_s4.pth',
     'faceir': 'https://github.com/zsyOAOA/ResShift/releases/download/v2.0/resshift_faceir_s4.pth',
-         }
+    'deblur': 'https://github.com/zsyOAOA/ResShift/releases/download/v2.0/resshift_deblur_s4.pth',
+     }
 
 def get_configs(task='realsr', version='v3', scale=4):
     ckpt_dir = Path('./weights')
@@ -79,6 +81,13 @@ def get_configs(task='realsr', version='v3', scale=4):
         # ckpt_path = ckpt_dir / f'resshift_{task}_s{_STEP[task]}.pth'
         # vqgan_url = _LINK['vqgan_face512']
         # vqgan_path = ckpt_dir / f'ffhq512_vq_f8_dim8_face.pth'
+    # elif args.task == 'deblur':
+        # configs = OmegaConf.load('./configs/deblur_gopro256.yaml')
+        # assert args.scale == 1, 'Please set scale equals 1 for deblurring!'
+        # ckpt_url = _LINK[args.task]
+        # ckpt_path = ckpt_dir / f'resshift_{args.task}_s{_STEP[args.task]}.pth'
+        # vqgan_url = _LINK['vqgan']
+        # vqgan_path = ckpt_dir / f'autoencoder_vq_f4.pth'
     else:
         raise TypeError(f"Unexpected task type: {task}!")
 
