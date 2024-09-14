@@ -1,4 +1,4 @@
-# ResShift: Efficient Diffusion Model for Image Super-resolution by Residual Shifting (NeurIPS 2023, Spotlight) 
+# ResShift: Efficient Diffusion Model for Image Super-resolution by Residual Shifting (NeurIPS 2023, Spotlight, TPAMI@2024) 
 
 [Zongsheng Yue](https://zsyoaoa.github.io/), [Jianyi Wang](https://iceclear.github.io/), [Chen Change Loy](https://www.mmlab-ntu.com/person/ccloy/) 
 
@@ -15,6 +15,7 @@
 
 ---
 ## Update
+- **2024.09.13**: Our extended journal version has beed accepted by TPAMI@2024. We add the training and testing code for deblurring.
 - **2024.03.11**: Update the code for the Journal paper
 - **2023.12.02**: Add configurations for the x2 super-resolution task.
 - **2023.08.15**: Add [![OpenXLab](https://img.shields.io/badge/Demo-%F0%9F%90%BC%20OpenXLab-blue)](https://openxlab.org.cn/apps/detail/Zongsheng/ResShift).
@@ -43,11 +44,15 @@ conda activate resshift
 
 ## Applications
 ### :point_right: Real-world image super-resolution
-[<img src="assets/0015.png" height="324px"/>](https://imgsli.com/MTkzNzgz) [<img src="assets/0030.png" height="324px"/>](https://imgsli.com/MTkzNzgx)
+[<img src="assets/0015.png" height="330px"/>](https://imgsli.com/MTkzNzgz) [<img src="assets/0030.png" height="330px"/>](https://imgsli.com/MTkzNzgx)
 
-[<img src="assets/frog.png" height="324px"/>](https://imgsli.com/MTkzNzg0) [<img src="assets/dog2.png" height="324px">](https://imgsli.com/MTkzNzg3)
+[<img src="assets/frog.png" height="330px"/>](https://imgsli.com/MTkzNzg0) [<img src="assets/dog2.png" height="330px">](https://imgsli.com/MTkzNzg3)
 
-[<img src="assets/cat.png" height="252px"/>](https://imgsli.com/MTkzNzkx) [<img src="assets/Lincon.png" height="252px"/>](https://imgsli.com/MTkzNzk5) [<img src="assets/oldphoto6.png" height="252px"/>](https://imgsli.com/MTkzNzk2) 
+[<img src="assets/cat.png" height="257px"/>](https://imgsli.com/MTkzNzkx) [<img src="assets/Lincon.png" height="257px"/>](https://imgsli.com/MTkzNzk5) [<img src="assets/oldphoto6.png" height="257px"/>](https://imgsli.com/MTkzNzk2) 
+
+### :point_right: Image deblurring
+[<img src="assets/gopro_138.png" height="218"/>](https://imgsli.com/Mjk2NTcz) [<img src="assets/gopro_301.png" height="218px"/>](https://imgsli.com/Mjk2NjM5) 
+[<img src="assets/gopro_537.png" height="217"/>](https://imgsli.com/Mjk2NjQ2) [<img src="assets/gopro_838.png" height="217px"/>](https://imgsli.com/Mjk2NjUw) 
 
 ### :point_right: Image inpainting
 <img src="testdata/inpainting/imagenet/lq_mark/ILSVRC2012_val_00001639_mark.png" height="126px"/> <img src="testdata/inpainting/imagenet/results/ILSVRC2012_val_00001639.png" height="126px"/> <img src="testdata/inpainting/imagenet/lq_mark/ILSVRC2012_val_00001810_mark.png" height="126px"/> <img src="testdata/inpainting/imagenet/results/ILSVRC2012_val_00001810.png" height="126px"/> <img src="testdata/inpainting/imagenet/lq_mark/ILSVRC2012_val_00001204_mark.png" height="126px"/> <img src="testdata/inpainting/imagenet/results/ILSVRC2012_val_00001204.png" height="126px"/> 
@@ -74,6 +79,11 @@ python inference_resshift.py -i [image folder/image path] -o [result folder] --t
 #### :lion: Bicubic (resize by Matlab) image super-resolution
 ```
 python inference_resshift.py -i [image folder/image path] -o [result folder] --task bicsr --scale 4
+```
+#### :snail: Image deblurring
+
+```
+python inference_resshift.py -i [image folder/image path] -o [result folder] --task deblur --scale 1 
 ```
 #### :snake: Natural image inpainting
 ```
@@ -103,6 +113,10 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 torchrun --standalone --nproc_per_node=8 --
 #### :whale: Real-world Image Super-resolution for Journal
 ```
 CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 torchrun --standalone --nproc_per_node=8 --nnodes=1 main.py --cfg_path configs/realsr_swinunet_realesrgan256_journal.yaml --save_dir [Logging Folder] 
+```
+#### :camel: Image Deblurring for Journal
+```
+CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 torchrun --standalone --nproc_per_node=8 --nnodes=1 main.py --cfg_path configs/deblur_gopro256.yaml --save_dir [Logging Folder] 
 ```
 #### :ox: Image inpainting (Natural) for Journal
 ```
@@ -161,7 +175,7 @@ Reproduce the results in Table 5 of our Journal paper:
 python inference_resshift.py -i [image folder/image path] -o [result folder] --mask_path [mask path] --task inpaint_face --scale 1 --chop_size 256 --chop_stride 256 --bs 32
 ```
 #### :boat: Blind Face Restoration
-Reproduce the results in Table 6 of our Journal paper (arXiv):
+Reproduce the results in Table 6 of our Journal paper:
 ```
 python inference_resshift.py -i [image folder/image path] -o [result folder] --task faceir --scale 1 --chop_size 256 --chop_stride 256 --bs 16
 ```
