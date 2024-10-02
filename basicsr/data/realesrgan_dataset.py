@@ -7,6 +7,8 @@ import random
 import time
 import torch
 from pathlib import Path
+from utils import util_common
+
 
 import albumentations
 
@@ -59,9 +61,10 @@ class RealESRGANDataset(data.Dataset):
         # file client (lmdb io backend)
         self.paths = []
         if 'dir_paths' in opt:
-            for current_dir in opt['dir_paths']:
-                for current_ext in opt['im_exts']:
-                    self.paths.extend(sorted([str(x) for x in Path(current_dir).glob(f'**/*.{current_ext}')]))
+            current_dir = opt['dir_paths']
+            current_ext = opt['im_exts']
+            self.paths.extend(util_common.scan_files_from_folder(current_dir, current_ext, False))
+           #print(self.paths, current_dir, current_ext)
         if 'txt_file_path' in opt:
             for current_txt in opt['txt_file_path']:
                 self.paths.extend(readline_txt(current_txt))
