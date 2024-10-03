@@ -34,6 +34,7 @@ import torch.multiprocessing as mp
 import torchvision.utils as vutils
 # from torch.utils.tensorboard import SummaryWriter
 from torch.nn.parallel import DistributedDataParallel as DDP
+from tqdm import tqdm
 
 
 class TrainerBase:
@@ -306,7 +307,7 @@ class TrainerBase:
 
         self.model.train()
         num_iters_epoch = math.ceil(len(self.datasets['train']) / self.configs.train.batch[0])
-        for ii in range(self.iters_start, self.configs.train.iterations):
+        for ii in tqdm(range(self.iters_start, self.configs.train.iterations)):
             self.current_iters = ii + 1
 
             # prepare data
