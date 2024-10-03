@@ -4,31 +4,59 @@ import torch
 from torch.nn import functional as F
 
 
+
 def filter2D(img, kernel):
-    """PyTorch version of cv2.filter2D
+    """
+    PyTorch version of cv2.filter2D
 
     Args:
-        img (Tensor): (b, c, h, w)
-        kernel (Tensor): (b, k, k)
+        img (Tensor): Input image tensor of shape (b, c, h, w)
+        kernel (Tensor): Kernel tensor of shape (b, k, k)
+
+    Returns:
+        Tensor: Filtered image tensor of shape (b, c, h, w)
     """
     k = kernel.size(-1)
-    b, c, h, w = img.size()
-    if k % 2 == 1:
-        img = F.pad(img, (k // 2, k // 2, k // 2, k // 2), mode='reflect')
-    else:
-        raise ValueError('Wrong kernel size')
+    assert k % 2 == 1, "Kernel size should be odd for symmetric padding."
 
-    ph, pw = img.size()[-2:]
+    b, c, h, w = img.size()
+    ph, pw = h, w  # Assuming ph and pw refer to height and width
+
+    padding = k // 2  # For 'same' padding
 
     if kernel.size(0) == 1:
-        # apply the same kernel to all batch images
-        img = img.view(b * c, 1, ph, pw)
-        kernel = kernel.view(1, 1, k, k)
-        return F.conv2d(img, kernel, padding=0).view(b, c, h, w)
+        # Apply the same kernel to all batch images and channels
+        img_reshaped = img.reshape(b * c, 1, ph, pw)  # Shape: (b*c, 1, h, w)
+        kernel_reshaped = kernel.reshape(1, 1, k, k)  # Shape: (1, 1, k, k)
+        conv_out = F.conv2d(img_reshaped, kernel_reshaped, padding=padding)
+        filtered_img = conv_out.reshape(b, c, h, w)
+     #   print(f"Filtered image shape (same kernel): {filtered_img.shape}")  # Debug
+        return filtered_img
     else:
-        img = img.view(1, b * c, ph, pw)
-        kernel = kernel.view(b, 1, k, k).repeat(1, c, 1, 1).view(b * c, 1, k, k)
-        return F.conv2d(img, kernel, groups=b * c).view(b, c, h, w)
+        # Apply different kernels for each image in the batch to each channel
+        assert kernel.size(0) == b, "Number of kernels must match batch size."
+        
+        # Reshape kernel to (b, 1, k, k)
+        kernel_reshaped = kernel.reshape(b, 1, k, k)  # Shape: (b, 1, k, k)
+        # Repeat kernel across channels to get (b*c, 1, k, k)
+        kernel_repeated = kernel_reshaped.repeat(1, c, 1, 1).reshape(b * c, 1, k, k)  # Shape: (b*c, 1, k, k)
+        
+        # Reshape img to (1, b*c, h, w)
+        img_reshaped = img.reshape(1, b * c, ph, pw)  # Shape: (1, b*c, h, w)
+        
+        # Debugging statements
+      #  print(f"Kernel repeated shape: {kernel_repeated.shape}")  # Expected: [b*c, 1, k, k]
+       # print(f"Image reshaped shape: {img_reshaped.shape}")      # Expected: [1, b*c, h, w]")
+        
+        # Perform grouped convolution
+        conv_out = F.conv2d(img_reshaped, kernel_repeated, padding=padding, groups=b * c)
+        # Reshape back to (b, c, h, w)
+        filtered_img = conv_out.reshape(b, c, h, w)
+        
+        # Debugging statement
+      #  print(f"Filtered image shape (different kernels): {filtered_img.shape}")  # Debug
+        
+        return filtered_img
 
 
 def usm_sharp(img, weight=0.5, radius=50, threshold=10):
