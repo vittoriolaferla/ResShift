@@ -9,10 +9,10 @@ model:
     in_channels: 3
     model_channels: 160
     out_channels: 3
-    attention_resolutions: [64,32,16,8]
+    attention_resolutions: [12,12,6,6]
     dropout: 0
-    channel_mult: [1, 2, 2, 4]
-    num_res_blocks: [2, 2, 2, 2]
+    channel_mult: [1, 1]
+    num_res_blocks: [2, 2]
     conv_resample: True
     dims: 2
     use_fp16: False
@@ -21,10 +21,10 @@ model:
     resblock_updown: False
     swin_depth: 2
     swin_embed_dim: 192
-    window_size: 8
+    window_size: 2
     mlp_ratio: 4
     cond_lq: True
-    lq_size: 64
+    lq_size: 12
 
 diffusion:
   target: models.script_util.create_gaussian_diffusion
@@ -54,7 +54,7 @@ autoencoder:
     ddconfig:
       double_z: False
       z_channels: 3
-      resolution: 256
+      resolution: 64
       in_channels: 3
       out_ch: 3
       ch: 128
@@ -97,12 +97,8 @@ data:
   train:
     type: realesrgan
     params:
-      dir_paths: [data/train]
-      txt_file_path: [
-                      '/mnt/sfs-common/zsyue/database/ImageNet/files_txt/path_train_all.txt', 
-                      '/mnt/sfs-common/zsyue/database/FFHQ/files_txt/files256.txt',
-                     ] 
-      im_exts: 'png'
+      dir_paths: data/train
+      im_exts: png
       io_backend:
         type: disk
       blur_kernel_size: 21
@@ -123,7 +119,7 @@ data:
 
       final_sinc_prob: 0.8
 
-      gt_size: 256
+      gt_size: 48
       crop_pad_size: 300
       use_hflip: True
       use_rot: False
@@ -151,17 +147,17 @@ train:
   lr_schedule: ~
   warmup_iterations: 5000
   # dataloader
-  batch: [64, 8]                
+  batch: [16, 8]                
   microbatch: 8
   num_workers: 4
   prefetch_factor: 2            
   # optimization settings
   weight_decay: 0               
   ema_rate: 0.999
-  iterations: 300000            # total iterations
+  iterations: 10000            # total iterations
   # save logging
-  save_freq: 10000              
-  log_freq: [200, 2000, 1]         # [training loss, training images, val images]
+  save_freq: 2500              
+  log_freq: [500, 2000, 1]         # [training loss, training images, val images]
   local_logging: True           # manually save images
   tf_logging: False             # tensorboard logging
   # validation settings
